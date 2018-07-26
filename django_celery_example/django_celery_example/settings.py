@@ -1,4 +1,6 @@
 import os
+from django_celery_example.celery import app
+from celery.schedules import crontab
 from kombu import Queue, Exchange
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -27,7 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_celery_example',
-    'django_celery_results'
+    'django_celery_results',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
@@ -121,10 +124,15 @@ LOW_CELERY_QUEUE = 'low_development'
 
 CELERY_MAIN_QUEUE = LOW_CELERY_QUEUE
 
-# CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER = CELERY_EVENT_SERIALIZER = 'pickle'
-# CELERY_ACCEPT_CONTENT = ['application/x-python-serialize', 'pickle', 'json']
-from django_celery_example.celery import app
 app.conf.accept_content = ['application/x-python-serialize', 'pickle', 'json']
+app.conf.task_serializer = 'pickle'
+
+app.conf.beat_schedule = {
+    'test': {
+        'task': 'django_celery_example.tasks.test',
+        'schedule': crontab()
+    }
+}
 
 CELERY_TASK_ALWAYS_EAGER = False
 CELERY_TASK_DEFAULT_QUEUE = CELERY_TASK_DEFAULT_EXCHANGE = CELERY_TASK_DEFAULT_ROUTING_KEY = LOW_CELERY_QUEUE
